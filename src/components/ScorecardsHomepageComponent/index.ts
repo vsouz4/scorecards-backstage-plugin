@@ -1,0 +1,1 @@
+export { ScorecardsHomepageComponent } from './ScorecardsHomepageComponent';
