@@ -44,5 +44,5 @@ import LayersIcon from '@material-ui/icons/Layers';
 
 ...
 
-<SidebarItem icon={LayersIcon} to="scorecards" text="Scorecards" />;
+<SidebarItem icon={LayersIcon} to="scorecards" text="Scorecards" />
 ```
