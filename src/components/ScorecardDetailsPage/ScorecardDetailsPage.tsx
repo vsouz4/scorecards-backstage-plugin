@@ -3,6 +3,7 @@ import { useRouteRefParams } from '@backstage/core-plugin-api';
 import { scorecardRouteRef } from '../../routes';
 import { useAsync } from 'react-use';
 import {
+  Content,
   Table,
   TableColumn,
   Progress,
@@ -14,9 +15,10 @@ import { scorecardsApiRef } from '../../api';
 import { useApi } from '@backstage/core-plugin-api';
 import { Gauge } from '../Common';
 import { Typography, Grid, Box, Tooltip } from '@material-ui/core';
+import StarIcon from '@material-ui/icons/Star';
 
 type Evaluation = {
-  score: number;
+  scorePercentage: number;
   catalog: {
     title: string;
   };
@@ -33,27 +35,33 @@ type DenseTableProps = {
 export const DenseTable = ({ evaluations }: DenseTableProps) => {
   const columns: TableColumn[] = [
     { title: 'Name', field: 'name' },
-    { title: 'Score', field: 'score' },
+    { title: 'Score', field: 'scorePercentage' },
     { title: 'Level', field: 'level' },
   ];
 
   const data = evaluations.map(evaluation => {
+
+    const level = evaluation.level;
+    const levelName = evaluation.level?.name;
+    const levelColor = evaluation.level?.color;
+
     return {
       name: evaluation.catalog.title,
-      score: (
-          <Gauge value={evaluation.score} />
+      scorePercentage: (
+          <Gauge value={evaluation.scorePercentage} />
       ),
-      level: evaluation.level?.name,
       level: (
-        {evaluation.level && <Tooltip title={evaluation.level.name}>
-          <Box display="flex" flexDirection="row" alignItems={'center'}>
-            <StarIcon
-              style={{
-                color: {evaluation.level.color}
-              }}
-            />
-          </Box>
-        </Tooltip>}
+        <>
+            {level && (<Tooltip title={levelName}>
+              <Box display="flex" flexDirection="row" alignItems={'center'}>
+                <StarIcon
+                  style={{
+                    color: {levelColor}
+                  }}
+                />
+              </Box>
+            </Tooltip>)}
+        </>
       ),
     };
   });
@@ -93,7 +101,7 @@ export const ScorecardDetailsPage = () => {
           </InfoCard>
         </Grid>
         <Grid item>
-          <DenseTable evaluations={value.data.evaluations || []} />;
+          <DenseTable evaluations={value.data.evaluations || []} />
         </Grid>
       </Grid>
     </Content>
