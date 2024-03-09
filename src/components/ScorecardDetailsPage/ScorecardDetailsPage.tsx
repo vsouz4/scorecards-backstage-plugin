@@ -9,6 +9,7 @@ import {
   Progress,
   InfoCard,
   ResponseErrorPanel,
+  MarkdownContent,
 } from '@backstage/core-components';
 import { ScorecardDetails } from './ScorecardDetails';
 import { scorecardsApiRef } from '../../api';
@@ -203,7 +204,19 @@ export const ScorecardDetailsPage = () => {
           </InfoCard>
         </Grid>
         <Grid item>
-          <DenseTable evaluations={value.data.evaluations || []} />
+          <Grid container direction="row" spacing="1">
+            {value.data.description && (
+            <Grid item lg={4} xs={12}>
+                <InfoCard>
+                  <Box display="flex" flexDirection="column">
+                      <MarkdownContent content={value.data.description} />
+                  </Box>
+                </InfoCard>
+            </Grid>)}
+            <Grid item lg={value.data.description ? 8 : 12} xs={12}>
+              <DenseTable evaluations={value.data.evaluations || []} />
+            </Grid>
+          </Grid>
         </Grid>
       </Grid>
     </Content>
