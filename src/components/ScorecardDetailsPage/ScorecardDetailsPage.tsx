@@ -1,11 +1,11 @@
 import React from 'react';
+import PropTypes from 'prop-types';
+import { makeStyles } from '@material-ui/core/styles';
 import { useRouteRefParams } from '@backstage/core-plugin-api';
 import { scorecardRouteRef } from '../../routes';
 import { useAsync } from 'react-use';
 import {
   Content,
-  Table,
-  TableColumn,
   Progress,
   InfoCard,
   ResponseErrorPanel,
@@ -14,8 +14,104 @@ import { ScorecardDetails } from './ScorecardDetails';
 import { scorecardsApiRef } from '../../api';
 import { useApi } from '@backstage/core-plugin-api';
 import { Gauge } from '../Common';
-import { Typography, Grid, Box, Tooltip } from '@material-ui/core';
+import {
+    Typography,
+    Grid,
+    Box,
+    Tooltip,
+    Collapse,
+    IconButton,
+    Table,
+    TableBody,
+    TableCell,
+    TableContainer,
+    TableHead,
+    TableRow,
+    Paper
+} from '@material-ui/core';
 import StarIcon from '@material-ui/icons/Star';
+import KeyboardArrowDownIcon from '@material-ui/icons/KeyboardArrowDown';
+import KeyboardArrowUpIcon from '@material-ui/icons/KeyboardArrowUp';
+import ErrorIcon from '@material-ui/icons/Error';
+import CheckIcon from '@material-ui/icons/Check';
+
+const useRowStyles = makeStyles({
+  root: {
+    '& > *': {
+      borderBottom: 'unset',
+    },
+  },
+});
+
+function Row(props) {
+  const { row } = props;
+  const [open, setOpen] = React.useState(false);
+  const classes = useRowStyles();
+
+  return (
+    <React.Fragment>
+      <TableRow className={classes.root}>
+        <TableCell>
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell component="th" scope="row">
+          {row.name}
+        </TableCell>
+        <TableCell>{row.scorePercentage}</TableCell>
+        <TableCell>{row.level}</TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box margin={1}>
+              <Typography variant="h6" gutterBottom component="div">
+                Rules
+              </Typography>
+              <Table size="small" aria-label="purchases">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>State</TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Weight</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {row.rules.map((rule) => (
+                    <TableRow>
+                      <TableCell component="th" scope="row">
+                        {rule.passing ? (
+                          <CheckIcon color="primary" />
+                        ) : (
+                          <ErrorIcon color="error" />
+                        )}
+                      </TableCell>
+                      <TableCell>
+                        <Tooltip title={rule.rule}>
+                          <Box display="flex" flexDirection="row" alignItems={'center'}>
+                              {rule.name}
+                          </Box>
+                        </Tooltip>
+                      </TableCell>
+                      <TableCell>{rule.points}</TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+}
+
+type EvaluationRule = {
+  name: string;
+  points: number;
+  passing: boolean;
+}
 
 type Evaluation = {
   scorePercentage: number;
@@ -26,6 +122,7 @@ type Evaluation = {
     name: string;
     color: string;
   };
+  rules: EvaluationRule[];
 };
 
 type DenseTableProps = {
@@ -33,14 +130,7 @@ type DenseTableProps = {
 };
 
 export const DenseTable = ({ evaluations }: DenseTableProps) => {
-  const columns: TableColumn[] = [
-    { title: 'Name', field: 'name' },
-    { title: 'Score', field: 'scorePercentage' },
-    { title: 'Level', field: 'level' },
-  ];
-
   const data = evaluations.map(evaluation => {
-
     const level = evaluation.level;
     const levelName = evaluation.level?.name;
     const levelColor = evaluation.level?.color;
@@ -63,16 +153,28 @@ export const DenseTable = ({ evaluations }: DenseTableProps) => {
             </Tooltip>)}
         </>
       ),
+      rules: evaluation.rules
     };
   });
 
   return (
-    <Table
-      title="Evaluations"
-      options={{ search: false, paging: false }}
-      columns={columns}
-      data={data}
-    />
+    <TableContainer component={Paper}>
+      <Table aria-label="collapsible table">
+        <TableHead>
+          <TableRow>
+            <TableCell />
+            <TableCell>Name</TableCell>
+            <TableCell>Score</TableCell>
+            <TableCell>Level</TableCell>
+          </TableRow>
+        </TableHead>
+        <TableBody>
+          {data.map((row) => (
+            <Row key={row.name} row={row} />
+          ))}
+        </TableBody>
+      </Table>
+    </TableContainer>
   );
 };
 
