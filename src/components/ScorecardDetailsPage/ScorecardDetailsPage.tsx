@@ -67,17 +67,7 @@ function Row(props) {
         <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
           <Collapse in={open} timeout="auto" unmountOnExit>
             <Box margin={1}>
-              <Typography variant="h6" gutterBottom component="div">
-                Rules
-              </Typography>
-              <Table size="small" aria-label="purchases">
-                <TableHead>
-                  <TableRow>
-                    <TableCell>State</TableCell>
-                    <TableCell>Name</TableCell>
-                    <TableCell>Weight</TableCell>
-                  </TableRow>
-                </TableHead>
+              <Table size="small">
                 <TableBody>
                   {row.rules.map((rule) => (
                     <TableRow>
@@ -108,29 +98,86 @@ function Row(props) {
   );
 }
 
+function ScorecardRuleRow(props) {
+  const { rule } = props;
+  const [open, setOpen] = React.useState(false);
+  const classes = useRowStyles();
+
+  return (
+    <React.Fragment>
+      <Grid item lg={10}>
+        <Tooltip title={rule.rule}>
+          <Box display="flex" flexDirection="row" alignItems={'center'}>
+              {rule.name}
+          </Box>
+        </Tooltip>
+      </Grid>
+      <Grid item lg={1}>
+        <b>{rule.points}</b>
+      </Grid>
+    </React.Fragment>
+  );
+}
+
+function LevelRow(props) {
+  const { row } = props;
+  const [open, setOpen] = React.useState(false);
+  const classes = useRowStyles();
+
+  return (
+    <React.Fragment>
+      <TableRow className={classes.root}>
+        <TableCell>
+          <IconButton aria-label="expand row" size="small" onClick={() => setOpen(!open)}>
+            {open ? <KeyboardArrowUpIcon /> : <KeyboardArrowDownIcon />}
+          </IconButton>
+        </TableCell>
+        <TableCell component="th" scope="row">
+          {row.color}
+        </TableCell>
+      </TableRow>
+      <TableRow>
+        <TableCell style={{ paddingBottom: 0, paddingTop: 0 }} colSpan={6}>
+          <Collapse in={open} timeout="auto" unmountOnExit>
+            <Box margin={1}>
+              <Grid container>
+                {row.rules.map(rule => (
+                  <ScorecardRuleRow key={rule.name} rule={rule} />
+                ))}
+              </Grid>
+            </Box>
+          </Collapse>
+        </TableCell>
+      </TableRow>
+    </React.Fragment>
+  );
+}
+
 type EvaluationRule = {
   name: string;
   points: number;
   passing: boolean;
 }
 
+type Level = {
+    name: string;
+    color: string;
+};
+
 type Evaluation = {
   scorePercentage: number;
   catalog: {
     title: string;
   };
-  level: {
-    name: string;
-    color: string;
-  };
+  level: Level;
   rules: EvaluationRule[];
 };
 
-type DenseTableProps = {
+type ScoresTableProps = {
   evaluations: Evaluation[];
 };
 
-export const DenseTable = ({ evaluations }: DenseTableProps) => {
+export const ScoresTable = ({ evaluations }: ScoresTableProps) => {
   const data = evaluations.map(evaluation => {
     const level = evaluation.level;
     const levelName = evaluation.level?.name;
@@ -147,7 +194,7 @@ export const DenseTable = ({ evaluations }: DenseTableProps) => {
               <Box display="flex" flexDirection="row" alignItems={'center'}>
                 <StarIcon
                   style={{
-                    color: {levelColor}
+                    color: `#${levelColor}`
                   }}
                 />
               </Box>
@@ -179,6 +226,69 @@ export const DenseTable = ({ evaluations }: DenseTableProps) => {
   );
 };
 
+type LevelsTableProps = {
+  levels: Level[];
+};
+
+export const LevelsTable = ({ levels }: LevelsTableProps) => {
+  const data = levels.map(level => {
+    const levelName = level.name;
+    const levelColor = level.color;
+
+    return {
+      name: level.name,
+      color: (
+        <Tooltip title={levelName}>
+          <Box display="flex" flexDirection="row" alignItems={'center'}>
+            <StarIcon
+              style={{
+                color: `#${levelColor}`
+              }}
+            />
+          </Box>
+        </Tooltip>
+      ),
+      rules: level.rules
+    };
+  });
+
+  return (
+    <InfoCard title="Levels">
+        <TableContainer component={Paper}>
+          <Table aria-label="collapsible table">
+            <TableBody>
+              {data.map((row) => (
+                <LevelRow key={row.name} row={row} />
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+    </InfoCard>
+  );
+};
+
+type Rule = {
+  name: string;
+  rule: string;
+  points: number;
+};
+
+type RulesListProps = {
+  rules: Rule[];
+};
+
+export const RulesList = ({ rules }: RulesListProps) => {
+  return (
+    <InfoCard title="Rules">
+      <Grid container>
+        {rules.map(rule => (
+          <ScorecardRuleRow key={rule.name} rule={rule} />
+        ))}
+      </Grid>
+    </InfoCard>
+  );
+};
+
 export const ScorecardDetailsPage = () => {
   const { id: scorecardId } = useRouteRefParams(scorecardRouteRef);
   const scorecardsApi = useApi(scorecardsApiRef);
@@ -205,16 +315,20 @@ export const ScorecardDetailsPage = () => {
         </Grid>
         <Grid item>
           <Grid container direction="row" spacing="1">
-            {value.data.description && (
             <Grid item lg={4} xs={12}>
-                <InfoCard>
-                  <Box display="flex" flexDirection="column">
-                      <MarkdownContent content={value.data.description} />
-                  </Box>
-                </InfoCard>
-            </Grid>)}
-            <Grid item lg={value.data.description ? 8 : 12} xs={12}>
-              <DenseTable evaluations={value.data.evaluations || []} />
+              <Grid container spacing={3} direction="column">
+                {value.data.levels ? (
+                <Grid item>
+                    <LevelsTable levels={value.data.levels} />
+                </Grid>
+                ) : (
+                <Grid item>
+                    <RulesList rules={value.data.rules} />
+                </Grid>)}
+              </Grid>
+            </Grid>
+            <Grid item lg={8} xs={12}>
+              <ScoresTable evaluations={value.data.evaluations || []} />
             </Grid>
           </Grid>
         </Grid>
