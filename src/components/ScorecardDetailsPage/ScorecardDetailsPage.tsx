@@ -317,7 +317,7 @@ export const ScorecardDetailsPage = () => {
           <Grid container direction="row" spacing="1">
             <Grid item lg={4} xs={12}>
               <Grid container spacing={3} direction="column">
-                {value.data.levels ? (
+                {value.data.levels?.length > 0 ? (
                 <Grid item>
                     <LevelsTable levels={value.data.levels} />
                 </Grid>
